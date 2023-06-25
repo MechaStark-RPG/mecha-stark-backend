@@ -114,12 +114,16 @@ export default class Room {
 
   /**
    * Broadcast Array of Teams [player_socket_id: [playerId1, playerId2]].
-   *
+   * Broadcast Turns...
    * @access    public
    */
-  showTeams() {
-    const { teams } = this.store.draft;
-    this.io.to(this.roomId).emit('show-players-teams', { teams });
+  showTurn() {
+    const { turns, turnNum } = this.store.draft;
+    let turn = {}
+    if (turnNum - 1<= turns.length) {
+      turn = turns[turnNum -1 ];
+    }
+    this.io.to(this.roomId).emit('show-turns', { turn: turn });
   }
 
   /**
@@ -159,8 +163,28 @@ export default class Room {
     this._resetCurrentGame();
 
     this._emitTurn(0);
-    this.showTeams();
+    this.showTurn();
   }
+
+  _resetCurrentGame() {
+    if (this.store) {
+      this._resetTimeOut();
+      this.store.draft = {
+        turns: [],
+        teams: {},
+        sTime: new Date(),
+        timeOut: 0,
+        turnNum: 0,
+      };
+    }
+
+    // if (this.options) {
+    //   consola.info(`[USER-CONFIG] ${JSON.stringify(this.options)}`);
+    // } else {
+    //   consola.info(`[DEFAULT-CONFIG] ${JSON.stringify(this.options)}`);
+    // }
+  }
+
 
   /**
    * Consume player item and update the gameState. Reset the timeout and initiate next turn.
@@ -173,14 +197,14 @@ export default class Room {
       if (this.store.clients[this.store.draft.turnNum].id === this.socker.id) {
         // Add the selected item object to the collection
         if (item) {
-          this.store.draft.teams[this.socker.id] = [...(this.store.draft.teams[this.socker.id] || []), item];
+          this.store.draft.turns = [...(this.store.draft.turns || []), {...item, turnNum: this.store.draft.turnNum}];
         }
 
         this._resetTimeOut();
         this._nextTurn();
       }
 
-      this.showTeams();
+      this.showTurn();
     });
   }
 
@@ -251,24 +275,6 @@ export default class Room {
       consola.info('[TURN CHANGE] Timeout reset');
       clearTimeout(this.store.draft.timeOut);
     }
-  }
-
-  _resetCurrentGame() {
-    if (this.store) {
-      this._resetTimeOut();
-      this.store.draft = {
-        teams: {},
-        sTime: new Date(),
-        timeOut: 0,
-        turnNum: 0,
-      };
-    }
-
-    // if (this.options) {
-    //   consola.info(`[USER-CONFIG] ${JSON.stringify(this.options)}`);
-    // } else {
-    //   consola.info(`[DEFAULT-CONFIG] ${JSON.stringify(this.options)}`);
-    // }
   }
 
   /**
