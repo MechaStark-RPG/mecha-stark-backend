@@ -11,6 +11,7 @@ export default Users;
  * @returns {(boolean|Object)} True if doc existing, false otherwise
  */
 export async function checkExisting(username) {
+  console.log('checkExisting', username);
   const match = await Users.findOne({ username });
   return match;
 }
