@@ -118,12 +118,8 @@ export default class Room {
    * @access    public
    */
   showTurn() {
-    const { turns, turnNum } = this.store.draft;
-    let turn = {}
-    if (turnNum - 1<= turns.length) {
-      turn = turns[turnNum -1 ];
-    }
-    this.io.to(this.roomId).emit('show-turns', { turn: turn });
+    const { lastTurn } = this.store.draft;
+    this.io.to(this.roomId).emit('show-turns', { lastTurn });
   }
 
   /**
@@ -170,11 +166,12 @@ export default class Room {
     if (this.store) {
       this._resetTimeOut();
       this.store.draft = {
-        turns: [],
+        lastTurn: {},
         teams: {},
         sTime: new Date(),
         timeOut: 0,
         turnNum: 0,
+        generalTurn: 0
       };
     }
 
@@ -197,7 +194,7 @@ export default class Room {
       if (this.store.clients[this.store.draft.turnNum].id === this.socker.id) {
         // Add the selected item object to the collection
         if (item) {
-          this.store.draft.turns = [...(this.store.draft.turns || []), {...item, turnNum: this.store.draft.turnNum}];
+          this.store.draft.lastTurn = item
         }
 
         this._resetTimeOut();
@@ -251,7 +248,7 @@ export default class Room {
 
     const currentTurnNumber = (this.store.draft.turnNum + 1) % this.store.clients.length;
     this.store.draft.turnNum = currentTurnNumber;
-
+    this.store.draft.generalTurn = this.store.draft.turnNum + 1;
     this._emitTurn(currentTurnNumber);
   }
 
